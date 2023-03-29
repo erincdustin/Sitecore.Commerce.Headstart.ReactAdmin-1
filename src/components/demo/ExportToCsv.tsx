@@ -1,3 +1,4 @@
+import {ViewIcon} from "@chakra-ui/icons"
 import {
   AlertDialog,
   AlertDialogBody,
@@ -7,12 +8,16 @@ import {
   AlertDialogOverlay,
   Button,
   HStack,
+  MenuItem,
   Spinner,
   Text
 } from "@chakra-ui/react"
 import {useEffect, useRef, useState} from "react"
 
-export default function ExportToCsv() {
+interface ExportToCsvProps {
+  variant?: "button" | "menuitem"
+}
+export default function ExportToCsv({variant = "button"}: ExportToCsvProps) {
   const [loading, setLoading] = useState(false)
   const [isExportCSVDialogOpen, setExportCSVDialogOpen] = useState(false)
   const cancelRef = useRef()
@@ -27,9 +32,13 @@ export default function ExportToCsv() {
 
   return (
     <>
-      <Button variant="secondaryButton" onClick={() => setExportCSVDialogOpen(true)}>
-        Export to CSV
-      </Button>
+      {variant === "button" ? (
+        <Button variant="outline" onClick={() => setExportCSVDialogOpen(true)}>
+          Export to CSV
+        </Button>
+      ) : (
+        <MenuItem onClick={() => setExportCSVDialogOpen(true)}>Export to CSV</MenuItem>
+      )}
       <AlertDialog
         isOpen={isExportCSVDialogOpen}
         onClose={() => setExportCSVDialogOpen(false)}
@@ -53,11 +62,11 @@ export default function ExportToCsv() {
                   ref={cancelRef}
                   onClick={() => setExportCSVDialogOpen(false)}
                   disabled={loading}
-                  variant="secondaryButton"
+                  variant="outline"
                 >
                   Cancel
                 </Button>
-                <Button onClick={() => requestExportCSV()} disabled={loading}>
+                <Button variant="solid" colorScheme="primary" onClick={() => requestExportCSV()} disabled={loading}>
                   {loading ? <Spinner color="brand.500" /> : "Export items to CSV"}
                 </Button>
               </HStack>
