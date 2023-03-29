@@ -150,24 +150,26 @@ const DataTable = <T extends IDefaultResource>({
               </Center>
             </Box>
           )}
-          {rows.map((row, rowIndex) => (
-            <Tr key={rowIndex} role="row" position="relative" zIndex={1}>
-              {onSelectChange && (
-                <Td colSpan={1}>
-                  <Checkbox
-                    isChecked={selected.includes(row.data["ID"])}
-                    onChange={(e) => onSelectChange(row.data["ID"], e.target.checked)}
-                  />
-                </Td>
-              )}
-              {row.cells.map((cell, cellIndex) => (
-                <Td textAlign={cell.align} role="cell" key={cellIndex}>
-                  {cell.value}
-                </Td>
-              ))}
-              {rowActions && <Td>{rowActions(row.data)}</Td>}
-            </Tr>
-          ))}
+          {rows.map((row, rowIndex) => {
+            return (
+              <Tr key={rowIndex} role="row" position="relative" zIndex={1}>
+                {onSelectChange && (
+                  <Td colSpan={1}>
+                    <Checkbox
+                      isChecked={selected.includes(row.data["ID"])}
+                      onChange={(e) => onSelectChange(row.data["ID"], e.target.checked)}
+                    />
+                  </Td>
+                )}
+                {row.cells.map((cell, cellIndex) => (
+                  <Td textAlign={cell.align} role="cell" key={cellIndex}>
+                    {cell.value}
+                  </Td>
+                ))}
+                {rowActions && <Td>{rowActions(row.data)}</Td>}
+              </Tr>
+            )
+          })}
         </Tbody>
       </Table>
     </TableContainer>

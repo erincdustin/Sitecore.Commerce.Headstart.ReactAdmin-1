@@ -20,9 +20,9 @@ export interface ListViewGridOptions<T>
 
 export type ListViewTemplate = ReactElement | ReactElement[] | string
 
-interface IListView<T, F = any> {
+interface IListView<T = any, F = any> {
   initialViewMode?: "grid" | "table"
-  service?: (...args) => Promise<T extends Product ? ListPageWithFacets<T, F> : ListPage<T>>
+  service?: (...args) => Promise<ListPage<T>>
   itemActions: (item: T) => ReactElement
   tableOptions: ListViewTableOptions<T>
   gridOptions?: ListViewGridOptions<T>
@@ -96,14 +96,15 @@ const ListView = <T extends IDefaultResource>({
   const fetchData = useCallback(async () => {
     let response
     setLoading(true)
-    if (Object.values(params.routeParams).length) {
-      response = await service(...Object.values(params.routeParams), params.queryParams)
-    } else {
-      response = await service(params.queryParams)
-    }
+    // if (Object.values(params.routeParams).length) {
+    //   response = await service(...Object.values(params.routeParams), params.queryParams)
+    // } else {
+    //   response = await service(params.queryParams)
+    // }
+    response = await service()
     setData(response)
     setLoading(false)
-  }, [service, params])
+  }, [service])
 
   useEffect(() => {
     if (isReady) {
@@ -156,7 +157,7 @@ const ListView = <T extends IDefaultResource>({
     if (loading || (!loading && data)) {
       return (
         <Box mb={5}>
-          {viewMode === "grid" ? (
+          {/* {viewMode === "grid" ? (
             //GRID VIEW
             <DataGrid
               {...gridOptions}
@@ -166,20 +167,20 @@ const ListView = <T extends IDefaultResource>({
               selected={selected}
               onSelectChange={handleSelectChange}
             />
-          ) : (
-            //TABLE VIEW
-            <DataTable
-              {...tableOptions}
-              loading={loading}
-              rowActions={itemActions}
-              data={data && data.Items}
-              selected={selected}
-              onSelectChange={handleSelectChange}
-              onSelectAll={handleSelectAll}
-              currentSort={params.queryParams["SortBy"]}
-              // onSortChange={() => console.log("SORT CHANGE")}
-            />
-          )}
+          ) : ( */}
+
+          <DataTable
+            {...tableOptions}
+            loading={loading}
+            rowActions={itemActions}
+            data={data && data.Items}
+            selected={selected}
+            onSelectChange={handleSelectChange}
+            onSelectAll={handleSelectAll}
+            currentSort={params.queryParams["SortBy"]}
+            // onSortChange={() => console.log("SORT CHANGE")}
+          />
+          {/* )} */}
           <Center>
             <Pagination
               page={currentPage}
@@ -192,11 +193,9 @@ const ListView = <T extends IDefaultResource>({
     }
   }, [
     data,
-    viewMode,
     loading,
     itemActions,
     tableOptions,
-    gridOptions,
     params,
     selected,
     currentPage,
