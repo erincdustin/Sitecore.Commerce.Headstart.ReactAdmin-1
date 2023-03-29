@@ -32,8 +32,10 @@
     "@react-querybuilder/dnd": "^5.4.0",
     "apexcharts": "^3.36.0",
     "axios": "^1.2.0",
+    "axios-timing": "^1.0.2",
     "framer-motion": "^6.3.3",
     "lodash": "^4.17.21",
+    "lunr": "^2.3.9",
     "next": "12.2.0",
     "next-seo": "^5.4.0",
     "ordercloud-javascript-sdk": "^5.0.0-beta.2",
@@ -47,6 +49,7 @@
     "react-icons": "^4.4.0",
     "react-querybuilder": "^5.4.0",
     "react-table": "^7.8.0",
+    "swagger-parser": "^10.0.3",
     "universal-cookie": "^4.0.4",
     "yup": "^0.32.11"
   },

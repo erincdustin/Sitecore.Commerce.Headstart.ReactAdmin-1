@@ -1,29 +1,19 @@
-import {CheckCircleIcon, DeleteIcon, EditIcon, NotAllowedIcon, SettingsIcon} from "@chakra-ui/icons"
-import {
-  Box,
-  Container,
-  Icon,
-  IconButton,
-  Menu,
-  MenuButton,
-  MenuDivider,
-  MenuItem,
-  MenuList,
-  useDisclosure
-} from "@chakra-ui/react"
-import {ListPage, Products} from "ordercloud-javascript-sdk"
-import {TbDotsVertical} from "react-icons/tb"
+import {Box, Container, useDisclosure} from "@chakra-ui/react"
+import {ListPage} from "ordercloud-javascript-sdk"
 import {DataTableColumn} from "../shared/DataTable/DataTable"
 import ListView, {ListViewTableOptions} from "../shared/ListView/ListView"
-import buyerSpec from "./buyerSpec"
-import buyerList from "./buyerList"
-import ResourceListToolbar from "./ResourceListToolbar"
-import {useState, useCallback} from "react"
-import ProductActionMenu from "../products/list/ProductActionMenu"
+// import buyerSpec from "./buyerSpec"
+// import buyerList from "./buyerList"
+import {useState, useCallback, useContext} from "react"
 import ProductListToolbar from "../products/list/ProductListToolbar"
 import ProductBulkEditModal from "../products/modals/ProductBulkEditModal"
 import ProductDeleteModal from "../products/modals/ProductDeleteModal"
 import ProductPromotionModal from "../products/modals/ProductPromotionModal"
+import ResourceActionMenu from "./ResourceActionMenu"
+import useApiSpec from "hooks/useApiSpec"
+import ocConfig from "constants/ordercloud-config"
+import {AuthContext} from "context/auth-context"
+import BizUserRequest, {FieldValues} from "./bizUserRequest"
 
 const QueryMap = {
   // ?
@@ -36,72 +26,85 @@ const FilterMap = {
   active: "Active"
 }
 
-const properties = buyerSpec.responses["200"].content["application/json"].schema.properties.Items.items.properties
-const headers = Object.keys(properties).filter((p) => p !== "xp")
-const ResourceListTableColumns: DataTableColumn<any>[] = headers.map((h) => {
-  return {
-    header: h,
-    accessor: h,
-    cell: ({row, value}) => value.toString(),
-    sortable: true
-  }
-})
-
-const ResourceTableOptions: ListViewTableOptions<any> = {
-  responsive: {
-    base: ResourceListTableColumns,
-    md: ResourceListTableColumns,
-    lg: ResourceListTableColumns,
-    xl: ResourceListTableColumns
-  }
-}
-
-const getBuyers = () => Promise.resolve(buyerList)
-
-const getBuyersAsync: () => Promise<ListPage<any>> = async () => {
-  return await getBuyers()
-}
-
-const renderResourceActionsMenu = (rowData: any) => {
-  return (
-    <Menu>
-      <MenuButton as={IconButton} aria-label={`Action menu for ${rowData.Name}`} variant="outline" colorScheme="gray">
-        <Icon as={TbDotsVertical} mt={1} />
-      </MenuButton>
-      <MenuList>
-        <MenuItem justifyContent="space-between">
-          Edit <EditIcon />
-        </MenuItem>
-        <MenuItem color="blue.500" justifyContent="space-between">
-          Promote <SettingsIcon />
-        </MenuItem>
-        <MenuItem justifyContent="space-between" color={rowData.Active ? "orange.500" : "green.500"}>
-          {rowData.Active ? "Deactivate" : "Activate"}
-          {rowData.Active ? <NotAllowedIcon /> : <CheckCircleIcon />}
-        </MenuItem>
-        <MenuDivider />
-        <MenuItem justifyContent="space-between" color="red.500">
-          Delete <DeleteIcon />
-        </MenuItem>
-      </MenuList>
-    </Menu>
-  )
-}
+// const properties = buyerSpec.responses["200"].content["application/json"].schema.properties.Items.items.properties
+// const headers = Object.keys(properties).filter((p) => p !== "xp")
+// const ResourceListTableColumns: DataTableColumn<any>[] = headers.map((h) => {
+//   return {
+//     header: h,
+//     accessor: h,
+//     cell: ({row, value}) => value.toString(),
+//     sortable: true
+//   }
+// })
 
 // const ResourceTableOptions: ListViewTableOptions<any> = {
-//   columns: ResourceListTableColumns
+//   responsive: {
+//     base: ResourceListTableColumns,
+//     md: ResourceListTableColumns,
+//     lg: ResourceListTableColumns,
+//     xl: ResourceListTableColumns
+//   }
 // }
+
+// const getBuyers = () => Promise.resolve(buyerList)
+
+// const getBuyersAsync: () => Promise<ListPage<any>> = async () => {
+//   return await getBuyers()
+// }
+
+const resource = "Buyers"
+const operation = "Buyers.List"
 
 const ResourceList = () => {
   const [actionProduct, setActionProduct] = useState<any>()
   const deleteDisclosure = useDisclosure()
   const promoteDisclosure = useDisclosure()
   const editDisclosure = useDisclosure()
+  const {listOperationsByResource} = useApiSpec(ocConfig.baseApiUrl)
+  const {accessToken} = useContext(AuthContext)
+  const selectedOperation = listOperationsByResource[resource].find((o) => o.operationId === operation)
+  const properties = selectedOperation
+    ? selectedOperation.responses["200"].content["application/json"].schema.properties.Items.items.properties
+    : {}
+  const headers = Object.keys(properties).filter((p) => p !== "xp")
+  const ResourceListTableColumns: DataTableColumn<any>[] = headers.map((h) => {
+    return {
+      header: h,
+      accessor: h,
+      cell: ({row, value}) => value.toString(),
+      sortable: true
+    }
+  })
+  const ResourceTableOptions: ListViewTableOptions<any> = {
+    responsive: {
+      base: ResourceListTableColumns,
+      md: ResourceListTableColumns,
+      lg: ResourceListTableColumns,
+      xl: ResourceListTableColumns
+    }
+  }
 
-  const renderProductActionsMenu = useCallback(
+  const retrieveItems = useCallback(
+    async (options: any, cancelToken) => {
+      const request = new BizUserRequest(
+        accessToken,
+        {
+          body: {} as FieldValues,
+          params: {...options.filters, options},
+          locked: {}
+        },
+        listOperationsByResource[resource].find((o) => o.operationId === operation)
+      )
+      const response = await request.send()
+      return response.data
+    },
+    [accessToken, listOperationsByResource]
+  )
+
+  const renderResourceActionsMenu = useCallback(
     (product: any) => {
       return (
-        <ProductActionMenu
+        <ResourceActionMenu
           product={product}
           onOpen={() => setActionProduct(product)}
           // onClose={() => setActionProduct(undefined)}
@@ -115,10 +118,10 @@ const ResourceList = () => {
 
   return (
     <ListView<any>
-      service={getBuyersAsync}
+      service={retrieveItems}
       queryMap={QueryMap}
       filterMap={FilterMap}
-      itemActions={renderProductActionsMenu}
+      itemActions={renderResourceActionsMenu}
       tableOptions={ResourceTableOptions}
       // gridOptions={ProductGridOptions}
     >
