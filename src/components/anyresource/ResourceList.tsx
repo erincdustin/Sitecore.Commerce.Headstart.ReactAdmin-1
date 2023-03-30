@@ -26,34 +26,8 @@ const FilterMap = {
   active: "Active"
 }
 
-// const properties = buyerSpec.responses["200"].content["application/json"].schema.properties.Items.items.properties
-// const headers = Object.keys(properties).filter((p) => p !== "xp")
-// const ResourceListTableColumns: DataTableColumn<any>[] = headers.map((h) => {
-//   return {
-//     header: h,
-//     accessor: h,
-//     cell: ({row, value}) => value.toString(),
-//     sortable: true
-//   }
-// })
-
-// const ResourceTableOptions: ListViewTableOptions<any> = {
-//   responsive: {
-//     base: ResourceListTableColumns,
-//     md: ResourceListTableColumns,
-//     lg: ResourceListTableColumns,
-//     xl: ResourceListTableColumns
-//   }
-// }
-
-// const getBuyers = () => Promise.resolve(buyerList)
-
-// const getBuyersAsync: () => Promise<ListPage<any>> = async () => {
-//   return await getBuyers()
-// }
-
-const resource = "Buyers"
-const operation = "Buyers.List"
+const resource = "Products"
+const operation = "Products.List"
 
 const ResourceList = () => {
   const [actionProduct, setActionProduct] = useState<any>()
@@ -66,13 +40,14 @@ const ResourceList = () => {
   const properties = selectedOperation
     ? selectedOperation.responses["200"].content["application/json"].schema.properties.Items.items.properties
     : {}
+  const sortByArray = selectedOperation.parameters.find(p => p.name === "sortBy")?.schema.items.enum || []
   const headers = Object.keys(properties).filter((p) => p !== "xp")
   const ResourceListTableColumns: DataTableColumn<any>[] = headers.map((h) => {
     return {
       header: h,
       accessor: h,
-      cell: ({row, value}) => value.toString(),
-      sortable: true
+      cell: ({row, value}) => value?.toString(),
+      sortable: sortByArray.includes(h)
     }
   })
   const ResourceTableOptions: ListViewTableOptions<any> = {
@@ -90,7 +65,7 @@ const ResourceList = () => {
         accessToken,
         {
           body: {} as FieldValues,
-          params: {...options.filters, options},
+          params: options,
           locked: {}
         },
         listOperationsByResource[resource].find((o) => o.operationId === operation)
