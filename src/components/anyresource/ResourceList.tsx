@@ -4,8 +4,7 @@ import {DataTableColumn} from "../shared/DataTable/DataTable"
 import ListView, {ListViewTableOptions} from "../shared/ListView/ListView"
 // import buyerSpec from "./buyerSpec"
 // import buyerList from "./buyerList"
-import {useState, useCallback, useContext} from "react"
-import ProductListToolbar from "../products/list/ProductListToolbar"
+import {useState, useCallback, useContext, useMemo, useEffect} from "react"
 import ProductBulkEditModal from "../products/modals/ProductBulkEditModal"
 import ProductDeleteModal from "../products/modals/ProductDeleteModal"
 import ProductPromotionModal from "../products/modals/ProductPromotionModal"
@@ -14,6 +13,7 @@ import useApiSpec from "hooks/useApiSpec"
 import ocConfig from "constants/ordercloud-config"
 import {AuthContext} from "context/auth-context"
 import BizUserRequest, {FieldValues} from "./bizUserRequest"
+import ResourceListToolbar from "./ResourceListToolbar"
 
 const QueryMap = {
   // ?
@@ -26,8 +26,55 @@ const FilterMap = {
   active: "Active"
 }
 
-const resource = "Products"
-const operation = "Products.List"
+const resource = "Buyers"
+const operation = "Buyers.List"
+
+function flattenNestedProperties(obj) {
+  const flatObj = {}
+  for (let key in obj) {
+    if (obj[key].hasOwnProperty("allOf")) {
+      const nestedObj = obj[key]["allOf"][0]["properties"]
+      for (let innerKey in nestedObj) {
+        flatObj[key + "." + innerKey] = nestedObj[innerKey]
+      }
+    } else {
+      flatObj[key] = obj[key]
+    }
+  }
+  return flatObj
+}
+
+const DEFAULT_SORT_ORDER = [
+  "OwnerID",
+  "DefaultPriceScheduleID",
+  "AutoForward",
+  "ID",
+  "ParentID",
+  "IsParent",
+  "Name",
+  "Description",
+  "QuantityMultiplier",
+  "ShipWeight",
+  "ShipHeight",
+  "ShipWidth",
+  "ShipLength",
+  "DefaultCatalogID",
+  "CategoryCount",
+  "Active",
+  "SpecCount",
+  "VariantCount",
+  "ShipFromAddressID",
+  "Inventory.Enabled",
+  "Inventory.NotificationPoint",
+  "Inventory.VariantLevelTracking",
+  "Inventory.OrderCanExceed",
+  "Inventory.QuantityAvailable",
+  "Inventory.LastUpdated",
+  "DateCreated",
+  "Returnable",
+  "AllSuppliersCanSell",
+  "DefaultSupplierID"
+]
 
 const ResourceList = () => {
   const [actionProduct, setActionProduct] = useState<any>()
@@ -36,28 +83,67 @@ const ResourceList = () => {
   const editDisclosure = useDisclosure()
   const {listOperationsByResource} = useApiSpec(ocConfig.baseApiUrl)
   const {accessToken} = useContext(AuthContext)
-  const selectedOperation = listOperationsByResource[resource].find((o) => o.operationId === operation)
-  const properties = selectedOperation
-    ? selectedOperation.responses["200"].content["application/json"].schema.properties.Items.items.properties
-    : {}
-  const sortByArray = selectedOperation.parameters.find(p => p.name === "sortBy")?.schema.items.enum || []
-  const headers = Object.keys(properties).filter((p) => p !== "xp")
-  const ResourceListTableColumns: DataTableColumn<any>[] = headers.map((h) => {
+  const selectedOperation = useMemo(
+    () => listOperationsByResource[resource].find((o) => o.operationId === operation),
+    [listOperationsByResource]
+  )
+  const properties = useMemo(
+    () =>
+      selectedOperation
+        ? flattenNestedProperties(
+            selectedOperation.responses["200"].content["application/json"].schema.properties.Items.items.properties
+          )
+        : {},
+    [selectedOperation]
+  )
+  const sortByArray = useMemo(
+    () => selectedOperation.parameters.find((p) => p.name === "sortBy")?.schema.items.enum || [],
+    [selectedOperation]
+  )
+  const headers = useMemo(
+    () =>
+      Object.keys(properties)
+        .filter((p) => p !== "xp")
+        .sort((a, b) => {
+          return DEFAULT_SORT_ORDER.indexOf(a) - DEFAULT_SORT_ORDER.indexOf(b)
+        }),
+    [properties]
+  )
+  // const getSavedColumnHeaders = useCallback(() => {
+  //   const columns = localStorage.getItem(`${operation}:tableColumns`)
+  //   if (!columns?.length) {
+  //     return headers
+  //   }
+  //   return JSON.parse(columns)
+  // }, [headers])
+  // const [columns, setColumns] = useState(() => getSavedColumnHeaders)
+
+  // useEffect(() => {
+  //   // localStorage.setItem(`${operation}:tableColumns`, JSON.stringify(columns))
+  // }, [columns])
+
+  const ResourceListTableColumns: DataTableColumn<any>[] = useMemo(
+    () =>
+      headers.map((h) => {
+        return {
+          header: h,
+          accessor: h,
+          cell: ({row, value}) => value?.toString(),
+          sortable: sortByArray.includes(h)
+        }
+      }),
+    [headers, sortByArray]
+  )
+  const ResourceTableOptions: ListViewTableOptions<any> = useMemo(() => {
     return {
-      header: h,
-      accessor: h,
-      cell: ({row, value}) => value?.toString(),
-      sortable: sortByArray.includes(h)
+      responsive: {
+        base: ResourceListTableColumns?.filter((c) => c.header === "ID" || c.header === "Name"), // TODO: make dynamic
+        md: ResourceListTableColumns,
+        lg: ResourceListTableColumns,
+        xl: ResourceListTableColumns
+      }
     }
-  })
-  const ResourceTableOptions: ListViewTableOptions<any> = {
-    responsive: {
-      base: ResourceListTableColumns,
-      md: ResourceListTableColumns,
-      lg: ResourceListTableColumns,
-      xl: ResourceListTableColumns
-    }
-  }
+  }, [ResourceListTableColumns])
 
   const retrieveItems = useCallback(
     async (options: any, cancelToken) => {
@@ -103,13 +189,16 @@ const ResourceList = () => {
       {({renderContent, items, ...listViewChildProps}) => (
         <Container maxW="100%">
           <Box>
-            <ProductListToolbar
+            <ResourceListToolbar
               {...listViewChildProps}
               onBulkEdit={editDisclosure.onOpen}
               onBulkPromote={() => {
                 setActionProduct(undefined)
                 promoteDisclosure.onOpen()
               }}
+              columns={headers}
+              properties={properties}
+              resource={resource}
             />
           </Box>
           {renderContent}

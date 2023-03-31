@@ -1,13 +1,17 @@
 import {Box, Button, Stack, Text} from "@chakra-ui/react"
 import Link from "next/link"
-import {FC} from "react"
+import {FC, useCallback} from "react"
 import DebouncedSearchInput from "../shared/DebouncedSearchInput/DebouncedSearchInput"
 import {ListViewChildrenProps} from "../shared/ListView/ListView"
 import ListViewMetaInfo from "../shared/ListViewMetaInfo/ListViewMetaInfo"
 import ProductListActions from "../products/list/ProductListActions"
 import ProductStatusFilter from "../products/list/ProductStatusFilter"
+import BooleanFilter from "./BooleanFilter"
 
 interface ProductListToolbarProps extends Omit<ListViewChildrenProps, "renderContent"> {
+  columns: any
+  properties: any
+  resource: string
   onBulkPromote: () => void
   onBulkEdit: () => void
 }
@@ -20,20 +24,41 @@ const ResourceListToolbar: FC<ProductListToolbarProps> = ({
   onBulkEdit,
   filterParams,
   queryParams,
-  selected
+  selected,
+  columns,
+  properties,
+  resource
 }) => {
+  const renderResourceActionsMenu = useCallback(() => {
+    return columns.map((c, idx) => {
+      switch (properties[c]?.type) {
+        case "boolean":
+          return (
+            <BooleanFilter
+              key={idx}
+              value={filterParams[c]}
+              name={c}
+              onChange={updateQuery(c.toLocaleLowerCase(), true)}
+            />
+          )
+        default:
+          return
+      }
+    })
+  }, [columns, filterParams, properties, updateQuery])
+
   return (
     <>
       <Stack direction="row" mb={5}>
         <Stack direction={["column", "column", "column", "row"]}>
           <DebouncedSearchInput
-            label="Search {placeholder}"
+            label={`Search ${resource}`}
             value={queryParams["Search"]}
             onSearch={updateQuery("s", true)}
           />
           <Stack direction="row">
-            <ProductStatusFilter value={filterParams["Active"]} onChange={updateQuery("active", true)} />
-            <ProductListActions selected={selected} onBulkPromote={onBulkPromote} onBulkEdit={onBulkEdit} />
+            {renderResourceActionsMenu()}
+            {/* <ProductListActions selected={selected} onBulkPromote={onBulkPromote} onBulkEdit={onBulkEdit} /> */}
           </Stack>
         </Stack>
         <Box as="span" flexGrow="1"></Box>
