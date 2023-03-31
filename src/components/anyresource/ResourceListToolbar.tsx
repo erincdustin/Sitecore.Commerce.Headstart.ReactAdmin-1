@@ -35,21 +35,24 @@ const ResourceListToolbar: FC<ProductListToolbarProps> = ({
   resource
 }) => {
   const renderResourceActionsMenu = useCallback(() => {
-    return columns.map((c, idx) => {
-      switch (properties[c]?.type) {
-        case "boolean":
-          return (
-            <BooleanFilter
-              key={idx}
-              value={filterParams[c]}
-              name={c}
-              onChange={updateQuery(c.toLocaleLowerCase(), true)}
-            />
-          )
-        default:
-          return
-      }
-    })
+    return columns
+      .filter((c) => c === "Active")
+      .map((c, idx) => {
+        // TODO: temp. hiding other boolean filters
+        switch (properties[c]?.type) {
+          case "boolean":
+            return (
+              <BooleanFilter
+                key={idx}
+                value={filterParams[c]}
+                name={c}
+                onChange={updateQuery(c.toLocaleLowerCase(), true)}
+              />
+            )
+          default:
+            return
+        }
+      })
   }, [columns, filterParams, properties, updateQuery])
 
   return (
@@ -61,9 +64,6 @@ const ResourceListToolbar: FC<ProductListToolbarProps> = ({
             value={queryParams["Search"]}
             onSearch={updateQuery("s", true)}
           />
-          {/* <Stack direction="row">
-            <ColumnSelector allColumns={columns} userColumns={userColumns} onChange={onUpdateColumns} />
-          </Stack> */}
           <Stack direction="row">{renderResourceActionsMenu()}</Stack>
         </Stack>
         <Box as="span" flexGrow="1"></Box>
@@ -73,13 +73,13 @@ const ResourceListToolbar: FC<ProductListToolbarProps> = ({
             <Box as="span" width="2"></Box>
             {viewModeToggle}
           </Stack>
-          <Box order={[0, 0, 0, 1]} mt={0}>
+          {/* <Box order={[0, 0, 0, 1]} mt={0}>
             <Link passHref href="/products/new">
               <Button variant="solid" colorScheme="primary" as="a" mb={3}>
                 Create placeholder
               </Button>
             </Link>
-          </Box>
+          </Box> */}
         </Stack>
       </Stack>
       <Stack direction="row" mb={5}>

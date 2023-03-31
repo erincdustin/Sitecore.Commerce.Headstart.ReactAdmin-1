@@ -42,8 +42,8 @@ const ColumnSelector: FC<IBooleanFilter> = ({allColumns, userColumns, onChange})
       </MenuButton>
       <MenuList>
         <MenuOptionGroup defaultValue={userColumns} title={`Column Options`} type="radio">
-        <Stack direction="column" ml={3}>
-          {allColumns.map((c: string) => renderOptions(c))}
+          <Stack direction="column" ml={3}>
+            {allColumns.map((c: string) => renderOptions(c))}
           </Stack>
         </MenuOptionGroup>
       </MenuList>
