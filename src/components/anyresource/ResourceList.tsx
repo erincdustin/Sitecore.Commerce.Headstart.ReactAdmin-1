@@ -14,6 +14,7 @@ import ocConfig from "constants/ordercloud-config"
 import {AuthContext} from "context/auth-context"
 import BizUserRequest, {FieldValues} from "./bizUserRequest"
 import ResourceListToolbar from "./ResourceListToolbar"
+import { flattenNestedProperties } from "utils/spec.utils"
 
 const QueryMap = {
   // ?
@@ -28,21 +29,6 @@ const FilterMap = {
 
 const resource = "Buyers"
 const operation = "Buyers.List"
-
-function flattenNestedProperties(obj) {
-  const flatObj = {}
-  for (let key in obj) {
-    if (obj[key].hasOwnProperty("allOf")) {
-      const nestedObj = obj[key]["allOf"][0]["properties"]
-      for (let innerKey in nestedObj) {
-        flatObj[key + "." + innerKey] = nestedObj[innerKey]
-      }
-    } else {
-      flatObj[key] = obj[key]
-    }
-  }
-  return flatObj
-}
 
 const DEFAULT_SORT_ORDER = [
   "OwnerID",
