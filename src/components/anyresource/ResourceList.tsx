@@ -109,22 +109,34 @@ const ResourceList = () => {
         }),
     [properties]
   )
-  // const getSavedColumnHeaders = useCallback(() => {
-  //   const columns = localStorage.getItem(`${operation}:tableColumns`)
-  //   if (!columns?.length) {
-  //     return headers
-  //   }
-  //   return JSON.parse(columns)
-  // }, [headers])
-  // const [columns, setColumns] = useState(() => getSavedColumnHeaders)
+  const getSavedColumnHeaders = useCallback(() => {
+    const columns = localStorage.getItem(`${operation}:tableColumns`)
+    if (!columns?.length) {
+      return headers
+    }
+    return JSON.parse(columns)
+  }, [headers])
+  const [columns, setColumns] = useState(getSavedColumnHeaders)
 
-  // useEffect(() => {
-  //   // localStorage.setItem(`${operation}:tableColumns`, JSON.stringify(columns))
-  // }, [columns])
+  useEffect(() => {
+    localStorage.setItem(`${operation}:tableColumns`, JSON.stringify(columns))
+  }, [columns])
+
+  const toggleVisibility = useCallback(
+    (e: any) => {
+      const isSelected = columns.indexOf(e.target.value) > -1
+      if (isSelected) {
+        setColumns(columns.filter((i) => i !== e.target.value))
+      } else {
+        setColumns([...columns, e.target.value])
+      }
+    },
+    [columns]
+  )
 
   const ResourceListTableColumns: DataTableColumn<any>[] = useMemo(
     () =>
-      headers.map((h) => {
+      columns.map((h) => {
         return {
           header: h,
           accessor: h,
@@ -132,7 +144,7 @@ const ResourceList = () => {
           sortable: sortByArray.includes(h)
         }
       }),
-    [headers, sortByArray]
+    [columns, sortByArray]
   )
   const ResourceTableOptions: ListViewTableOptions<any> = useMemo(() => {
     return {
@@ -197,8 +209,10 @@ const ResourceList = () => {
                 promoteDisclosure.onOpen()
               }}
               columns={headers}
+              userColumns={columns}
               properties={properties}
               resource={resource}
+              onUpdateColumns={toggleVisibility}
             />
           </Box>
           {renderContent}
