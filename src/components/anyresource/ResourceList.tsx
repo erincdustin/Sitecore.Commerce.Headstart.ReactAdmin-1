@@ -1,10 +1,10 @@
-import {Box, Container, useDisclosure} from "@chakra-ui/react"
+import {Box, Container, Link, useDisclosure} from "@chakra-ui/react"
 import {ListPage} from "ordercloud-javascript-sdk"
 import {DataTableColumn} from "../shared/DataTable/DataTable"
 import ListView, {ListViewTableOptions} from "../shared/ListView/ListView"
 // import buyerSpec from "./buyerSpec"
 // import buyerList from "./buyerList"
-import {useState, useCallback, useContext, useMemo, useEffect} from "react"
+import {useState, useCallback, useContext, useMemo, useEffect, FC} from "react"
 import ProductBulkEditModal from "../products/modals/ProductBulkEditModal"
 import ProductDeleteModal from "../products/modals/ProductDeleteModal"
 import ProductPromotionModal from "../products/modals/ProductPromotionModal"
@@ -14,7 +14,8 @@ import ocConfig from "constants/ordercloud-config"
 import {AuthContext} from "context/auth-context"
 import BizUserRequest, {FieldValues} from "./bizUserRequest"
 import ResourceListToolbar from "./ResourceListToolbar"
-import { flattenNestedProperties } from "utils/spec.utils"
+import {flattenNestedProperties} from "utils/spec.utils"
+import {useRouter} from "hooks/useRouter"
 
 const QueryMap = {
   // ?
@@ -27,8 +28,8 @@ const FilterMap = {
   active: "Active"
 }
 
-const resource = "Buyers"
-const operation = "Buyers.List"
+// const resource = "Users"
+// const operation = "Users.List"
 
 const DEFAULT_SORT_ORDER = [
   "OwnerID",
@@ -62,17 +63,37 @@ const DEFAULT_SORT_ORDER = [
   "DefaultSupplierID"
 ]
 
-const ResourceList = () => {
+interface ResourceListProps {
+  resource: string
+  operation: string
+}
+
+const ResourceList: FC<ResourceListProps> = ({resource, operation}) => {
   const [actionProduct, setActionProduct] = useState<any>()
   const deleteDisclosure = useDisclosure()
   const promoteDisclosure = useDisclosure()
   const editDisclosure = useDisclosure()
+  const router = useRouter()
   const {listOperationsByResource} = useApiSpec(ocConfig.baseApiUrl)
   const {accessToken} = useContext(AuthContext)
   const selectedOperation = useMemo(
     () => listOperationsByResource[resource].find((o) => o.operationId === operation),
-    [listOperationsByResource]
+    [listOperationsByResource, operation, resource]
   )
+  const requiredParamsinPath = useMemo(
+    () =>
+      selectedOperation && selectedOperation?.parameters
+        ? selectedOperation.parameters.filter((p) => p.in === "path" && p.required).map((p) => p.name)
+        : [],
+    [selectedOperation]
+  )
+  const requiredParams = useMemo(() => {
+    let paramsObj = {}
+    requiredParamsinPath.forEach((p) => {
+      paramsObj[p] = router.query[p.toLocaleLowerCase()] as string
+    })
+    return paramsObj
+  }, [requiredParamsinPath, router.query])
   const properties = useMemo(
     () =>
       selectedOperation
@@ -120,17 +141,32 @@ const ResourceList = () => {
     [columns]
   )
 
+  const getUrl = useCallback(
+    (name: string, value: string) => {
+      let path = `${router.pathname}/${value}`
+      if (requiredParamsinPath) {
+        requiredParamsinPath.forEach((p) => {
+          const paramValue = requiredParams[p]
+          path = path.replace(`[${p.toLocaleLowerCase()}]`, paramValue) // TODO: fix for non-required params i.e. buyer catalogs
+        })
+      }
+      return path
+    },
+    [requiredParams, requiredParamsinPath, router.pathname]
+  )
+
   const ResourceListTableColumns: DataTableColumn<any>[] = useMemo(
     () =>
       columns.map((h) => {
         return {
           header: h,
           accessor: h,
-          cell: ({row, value}) => value?.toString(),
+          cell: ({row, value}) =>
+            h === "ID" ? <Link href={getUrl(h, value?.toString())}>{value?.toString()}</Link> : value?.toString(),
           sortable: sortByArray.includes(h)
         }
       }),
-    [columns, sortByArray]
+    [columns, router.pathname, sortByArray]
   )
   const ResourceTableOptions: ListViewTableOptions<any> = useMemo(() => {
     return {
@@ -149,7 +185,7 @@ const ResourceList = () => {
         accessToken,
         {
           body: {} as FieldValues,
-          params: options,
+          params: {...options, ...requiredParams},
           locked: {}
         },
         listOperationsByResource[resource].find((o) => o.operationId === operation)
