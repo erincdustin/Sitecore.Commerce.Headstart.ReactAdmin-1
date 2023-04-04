@@ -238,32 +238,6 @@ const ResourceList: FC<ResourceListProps> = ({resource, operation}) => {
             />
           </Box>
           {renderContent}
-          <ProductBulkEditModal
-            onComplete={listViewChildProps.upsertItems}
-            products={items ? items.filter((p) => listViewChildProps.selected.includes(p.ID)) : []}
-            disclosure={editDisclosure}
-          />
-          <ProductDeleteModal
-            onComplete={listViewChildProps.removeItems}
-            products={
-              actionProduct
-                ? [actionProduct]
-                : items
-                ? items.filter((p) => listViewChildProps.selected.includes(p.ID))
-                : []
-            }
-            disclosure={deleteDisclosure}
-          />
-          <ProductPromotionModal
-            products={
-              actionProduct
-                ? [actionProduct]
-                : items
-                ? items.filter((p) => listViewChildProps.selected.includes(p.ID))
-                : []
-            }
-            disclosure={promoteDisclosure}
-          />
         </Container>
       )}
     </ListView>

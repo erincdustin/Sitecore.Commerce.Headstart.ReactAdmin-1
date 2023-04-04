@@ -32,7 +32,6 @@
     "@react-querybuilder/dnd": "^5.4.0",
     "apexcharts": "^3.36.0",
     "axios": "^1.2.0",
-    "axios-timing": "^1.0.2",
     "framer-motion": "^6.3.3",
     "lodash": "^4.17.21",
     "lunr": "^2.3.9",

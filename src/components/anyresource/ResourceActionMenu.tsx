@@ -25,14 +25,12 @@ const ProductActionMenu: FC<IResourceActionMenu> = ({product, onOpen, onClose, o
         <Icon as={TbDotsVertical} mt={1} />
       </MenuButton>
       <MenuList>
+      {/* TODO: make dynamic */}
         <Link passHref href={`/products/${product.ID}`}>
           <MenuItem as="a" justifyContent="space-between">
             Edit <EditIcon />
           </MenuItem>
         </Link>
-        {/* <MenuItem color="blue.500" justifyContent="space-between" onClick={onPromote}>
-          Promote <SettingsIcon />
-        </MenuItem> */}
         <MenuDivider />
         <MenuItem justifyContent="space-between" color="red.500" onClick={onDelete}>
           Delete <DeleteIcon />

@@ -73,13 +73,6 @@ const ResourceListToolbar: FC<ProductListToolbarProps> = ({
             <Box as="span" width="2"></Box>
             {viewModeToggle}
           </Stack>
-          {/* <Box order={[0, 0, 0, 1]} mt={0}>
-            <Link passHref href="/products/new">
-              <Button variant="solid" colorScheme="primary" as="a" mb={3}>
-                Create placeholder
-              </Button>
-            </Link>
-          </Box> */}
         </Stack>
       </Stack>
       <Stack direction="row" mb={5}>

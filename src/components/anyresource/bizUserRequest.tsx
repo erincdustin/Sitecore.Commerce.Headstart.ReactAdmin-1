@@ -1,5 +1,4 @@
-import Axios, {AxiosRequestConfig, AxiosResponse, AxiosError} from "axios"
-// import AxiosTiming from "axios-timing"
+import Axios, {AxiosRequestConfig, AxiosResponse} from "axios"
 import jwtDecode from "jwt-decode"
 import paramsSerializer from "./ParamsSerializer"
 let axios
@@ -76,15 +75,13 @@ export interface AxiosResponseWithOperation extends AxiosResponse {
 export default class BizUserRequest {
   public token: string
   public id: string
-  // public tab: ConsoleTab;
   public form: RequestForm
-  public operation: any //TODO: need an operation interface
+  public operation: any
   public duration: number
   private _response?: AxiosResponse
   constructor(token: string, form: RequestForm, operation: any) {
     this.token = token
     this.id = Date.now().toString()
-    // this.tab = tab;
     this.form = form
     this.operation = operation
     this.duration = 0
@@ -148,20 +145,7 @@ export default class BizUserRequest {
   public send = async (): Promise<AxiosResponseWithOperation> => {
     if (!axios) {
       axios = Axios.create()
-      // AxiosTiming(axios, (timeInMs: number) => {
-      //   this.duration = Math.round(timeInMs)
-      // })
     }
     return axios.request(this.axiosRequest)
-    // .then((response: AxiosResponseWithOperation) => {
-    //   debugger;
-    //   const r = response;
-    //   r.operation = this.operation;
-    //   this._response = response;
-    // })
-    // .catch((err: AxiosError) => {
-    //   console.error('Console Request Failed', err);
-    //   this._response = err.response;
-    // });
   }
 }
