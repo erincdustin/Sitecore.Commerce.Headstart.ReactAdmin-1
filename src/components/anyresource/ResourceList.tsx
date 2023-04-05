@@ -27,48 +27,11 @@ const QueryMap = {
 const FilterMap = {
   active: "Active"
 }
-
-// const resource = "Users"
-// const operation = "Users.List"
-
-const DEFAULT_SORT_ORDER = [
-  "OwnerID",
-  "DefaultPriceScheduleID",
-  "AutoForward",
-  "ID",
-  "ParentID",
-  "IsParent",
-  "Name",
-  "Description",
-  "QuantityMultiplier",
-  "ShipWeight",
-  "ShipHeight",
-  "ShipWidth",
-  "ShipLength",
-  "DefaultCatalogID",
-  "CategoryCount",
-  "Active",
-  "SpecCount",
-  "VariantCount",
-  "ShipFromAddressID",
-  "Inventory.Enabled",
-  "Inventory.NotificationPoint",
-  "Inventory.VariantLevelTracking",
-  "Inventory.OrderCanExceed",
-  "Inventory.QuantityAvailable",
-  "Inventory.LastUpdated",
-  "DateCreated",
-  "Returnable",
-  "AllSuppliersCanSell",
-  "DefaultSupplierID"
-]
-
 interface ResourceListProps {
-  resource: string
   operation: string
 }
 
-const ResourceList: FC<ResourceListProps> = ({resource, operation}) => {
+const ResourceList: FC<ResourceListProps> = ({operation}) => {
   const [actionProduct, setActionProduct] = useState<any>()
   const deleteDisclosure = useDisclosure()
   const promoteDisclosure = useDisclosure()
@@ -76,6 +39,7 @@ const ResourceList: FC<ResourceListProps> = ({resource, operation}) => {
   const router = useRouter()
   const {listOperationsByResource} = useApiSpec(ocConfig.baseApiUrl)
   const {accessToken} = useContext(AuthContext)
+  const resource = useMemo(() => operation.split(".")[0], [operation])
   const selectedOperation = useMemo(
     () => listOperationsByResource[resource].find((o) => o.operationId === operation),
     [listOperationsByResource, operation, resource]
@@ -107,38 +71,42 @@ const ResourceList: FC<ResourceListProps> = ({resource, operation}) => {
     () => selectedOperation.parameters.find((p) => p.name === "sortBy")?.schema.items.enum || [],
     [selectedOperation]
   )
-  const headers = useMemo(
-    () =>
-      Object.keys(properties)
-        .filter((p) => p !== "xp")
-        .sort((a, b) => {
-          return DEFAULT_SORT_ORDER.indexOf(a) - DEFAULT_SORT_ORDER.indexOf(b)
-        }),
-    [properties]
-  )
+  const headers = useMemo(() => {
+    return Object.keys(properties).filter((p) => p !== "xp")
+  }, [properties])
   const getSavedColumnHeaders = useCallback(() => {
     const columns = localStorage.getItem(`${operation}:tableColumns`)
     if (!columns?.length) {
       return headers
     }
     return JSON.parse(columns)
-  }, [headers])
+  }, [headers, operation])
   const [columns, setColumns] = useState(getSavedColumnHeaders)
 
   useEffect(() => {
     localStorage.setItem(`${operation}:tableColumns`, JSON.stringify(columns))
-  }, [columns])
+  }, [columns, operation])
 
   const toggleVisibility = useCallback(
     (e: any) => {
       const isSelected = columns.indexOf(e.target.value) > -1
       if (isSelected) {
-        setColumns(columns.filter((i) => i !== e.target.value))
+        setColumns(
+          columns
+            .filter((i) => i !== e.target.value)
+            .sort((a, b) => {
+              return headers.indexOf(a) - headers.indexOf(b)
+            })
+        )
       } else {
-        setColumns([...columns, e.target.value])
+        setColumns(
+          [...columns, e.target.value].sort((a, b) => {
+            return headers.indexOf(a) - headers.indexOf(b)
+          })
+        )
       }
     },
-    [columns]
+    [columns, headers]
   )
 
   const getUrl = useCallback(

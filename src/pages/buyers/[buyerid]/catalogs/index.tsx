@@ -21,7 +21,7 @@ export async function getServerSideProps() {
 const CatalogsList = () => {
   return (
     <>
-      <ResourceList operation="Catalogs.List" resource="Catalogs" />
+      <ResourceList operation="Catalogs.List" />
     </>
   )
 }

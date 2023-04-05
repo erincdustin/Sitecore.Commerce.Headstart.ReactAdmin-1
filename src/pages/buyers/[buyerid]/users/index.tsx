@@ -23,7 +23,7 @@ export async function getServerSideProps() {
 const UsersList = () => {
   return (
     <ProtectedContent hasAccess={appPermissions.ProductManager}>
-      <ResourceList operation="Users.List" resource="Users" />
+      <ResourceList operation="Users.List" />
     </ProtectedContent>
   )
 }

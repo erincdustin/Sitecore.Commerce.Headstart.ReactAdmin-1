@@ -25,7 +25,7 @@ export async function getStaticProps() {
 const ProtectedBuyersList = () => {
   return (
     <ProtectedContent hasAccess={appPermissions.ProductManager}>
-    <ResourceList operation="Buyers.List" resource="Buyers" />
+    <ResourceList operation="Buyers.List" />
   </ProtectedContent>
   )
 }
