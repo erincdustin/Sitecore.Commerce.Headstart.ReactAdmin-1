@@ -1,3 +1,4 @@
+import ResourceList from "@/components/anyresource/ResourceList"
 import ProductList from "@/components/products/list/ProductList"
 import ProtectedContent from "components/auth/ProtectedContent"
 import {appPermissions} from "constants/app-permissions.config"
@@ -20,7 +21,7 @@ export async function getServerSideProps() {
 const ProtectedProducts = () => {
   return (
     <ProtectedContent hasAccess={appPermissions.ProductManager}>
-      <ProductList />
+      <ResourceList operation="Products.List" />
     </ProtectedContent>
   )
 }

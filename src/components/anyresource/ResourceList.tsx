@@ -1,13 +1,7 @@
-import {Box, Container, Link, useDisclosure} from "@chakra-ui/react"
-import {ListPage} from "ordercloud-javascript-sdk"
+import {Box, Container, HStack, Link, Tag, Text, useDisclosure} from "@chakra-ui/react"
 import {DataTableColumn} from "../shared/DataTable/DataTable"
 import ListView, {ListViewTableOptions} from "../shared/ListView/ListView"
-// import buyerSpec from "./buyerSpec"
-// import buyerList from "./buyerList"
 import {useState, useCallback, useContext, useMemo, useEffect, FC} from "react"
-import ProductBulkEditModal from "../products/modals/ProductBulkEditModal"
-import ProductDeleteModal from "../products/modals/ProductDeleteModal"
-import ProductPromotionModal from "../products/modals/ProductPromotionModal"
 import ResourceActionMenu from "./ResourceActionMenu"
 import useApiSpec from "hooks/useApiSpec"
 import ocConfig from "constants/ordercloud-config"
@@ -16,6 +10,9 @@ import BizUserRequest, {FieldValues} from "./bizUserRequest"
 import ResourceListToolbar from "./ResourceListToolbar"
 import {flattenNestedProperties} from "utils/spec.utils"
 import {useRouter} from "hooks/useRouter"
+import {textHelper} from "utils/text.utils"
+import {string} from "yup"
+import moment from "moment"
 
 const QueryMap = {
   // ?
@@ -72,7 +69,7 @@ const ResourceList: FC<ResourceListProps> = ({operation}) => {
     [selectedOperation]
   )
   const headers = useMemo(() => {
-    return Object.keys(properties).filter((p) => p !== "xp")
+    return Object.keys(properties).filter((p) => p !== "xp" && p !== "Password")
   }, [properties])
   const getSavedColumnHeaders = useCallback(() => {
     const columns = localStorage.getItem(`${operation}:tableColumns`)
@@ -123,18 +120,76 @@ const ResourceList: FC<ResourceListProps> = ({operation}) => {
     [requiredParams, requiredParamsinPath, router.pathname]
   )
 
+  const getType = useCallback((header: string) => {
+    const type = properties[header].type
+    const format = properties[header]?.format
+    const maxLength = properties[header]?.maxLength
+    switch (type) {
+      case "string":
+        return format && format === "date-time"
+          ? "date-time"
+          : maxLength && maxLength > 200
+          ? "long-text"
+          : "short-text"
+      default:
+        return type
+    }
+  }, [])
+
+  const getCellValue = useCallback(
+    (header: string, value: any) => {
+      const type = getType(header)
+      switch (type) {
+        case "date-time":
+          return <Text>{moment(value?.toString()).format("YYYY-MM-DD, h:mm:ss A")}</Text>
+        case "short-text":
+          return header === "ID" ? (
+            <Link href={getUrl(header, value?.toString())}>{value?.toString()}</Link>
+          ) : (
+            <Text>{value?.toString()}</Text>
+          ) //TODO: link whole table row to item ID
+        case "long-text":
+          return (
+            <Text w="100%" maxW="400px" noOfLines={2} fontSize="xs" title={value?.toString()}>
+              {value?.toString() ? textHelper.stripHTML(value?.toString()) : ""}
+            </Text>
+          )
+        case "array":
+          return (
+            <HStack spacing={2}>
+              {value.map((v) => (
+                <Tag size="sm" key={v.toString()} variant="solid" colorScheme="teal">
+                  {v.toString()}
+                </Tag>
+              ))}
+            </HStack>
+          )
+        case "boolean":
+          return value !== null ? (
+            <Tag size="md" colorScheme={Boolean(value) ? "green" : "red"}>
+              {value.toString()}
+            </Tag>
+          ) : (
+            ""
+          )
+        default:
+          return <Text>{value?.toString()}</Text>
+      }
+    },
+    [getType, getUrl]
+  )
+
   const ResourceListTableColumns: DataTableColumn<any>[] = useMemo(
     () =>
       columns.map((h) => {
         return {
           header: h,
           accessor: h,
-          cell: ({row, value}) =>
-            h === "ID" ? <Link href={getUrl(h, value?.toString())}>{value?.toString()}</Link> : value?.toString(),
+          cell: ({row, value}) => getCellValue(h, value),
           sortable: sortByArray.includes(h)
         }
       }),
-    [columns, router.pathname, sortByArray]
+    [columns, getCellValue, sortByArray]
   )
   const ResourceTableOptions: ListViewTableOptions<any> = useMemo(() => {
     return {
