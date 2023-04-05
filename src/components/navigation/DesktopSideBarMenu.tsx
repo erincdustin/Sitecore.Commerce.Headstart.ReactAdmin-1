@@ -111,7 +111,7 @@ const DesktopSideBarMenu = () => {
             </ProtectedContent>
             <ProtectedContent hasAccess={appPermissions.OrderManager}>
               <Link
-                href="/orders"
+                href="/orders?direction=Incoming"
                 pl="2"
                 pr="2"
                 pb="15px"

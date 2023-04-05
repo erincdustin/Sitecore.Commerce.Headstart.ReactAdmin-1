@@ -1,6 +1,6 @@
 import {Box, Container, HStack, Link, Tag, Text, useDisclosure} from "@chakra-ui/react"
 import {DataTableColumn} from "../shared/DataTable/DataTable"
-import ListView, {ListViewTableOptions} from "../shared/ListView/ListView"
+import ListView, {ListViewTableOptions, LocationSearchMap} from "../shared/ListView/ListView"
 import {useState, useCallback, useContext, useMemo, useEffect, FC} from "react"
 import ResourceActionMenu from "./ResourceActionMenu"
 import useApiSpec from "hooks/useApiSpec"
@@ -19,10 +19,6 @@ const QueryMap = {
   s: "Search",
   sort: "SortBy",
   p: "Page"
-}
-
-const FilterMap = {
-  active: "Active"
 }
 interface ResourceListProps {
   operation: string
@@ -112,7 +108,7 @@ const ResourceList: FC<ResourceListProps> = ({operation}) => {
       if (requiredParamsinPath) {
         requiredParamsinPath.forEach((p) => {
           const paramValue = requiredParams[p]
-          path = path.replace(`[${p.toLocaleLowerCase()}]`, paramValue) // TODO: fix for non-required params i.e. buyer catalogs
+          path = path.replace(`[${p.toLocaleLowerCase()}]`, paramValue)
         })
       }
       return path
@@ -120,21 +116,24 @@ const ResourceList: FC<ResourceListProps> = ({operation}) => {
     [requiredParams, requiredParamsinPath, router.pathname]
   )
 
-  const getType = useCallback((header: string) => {
-    const type = properties[header].type
-    const format = properties[header]?.format
-    const maxLength = properties[header]?.maxLength
-    switch (type) {
-      case "string":
-        return format && format === "date-time"
-          ? "date-time"
-          : maxLength && maxLength > 200
-          ? "long-text"
-          : "short-text"
-      default:
-        return type
-    }
-  }, [])
+  const getType = useCallback(
+    (header: string) => {
+      const type = properties[header].type
+      switch (type) {
+        case "string":
+          return properties[header]?.format === "date-time"
+            ? "date-time"
+            : properties[header]?.enum
+            ? "enum"
+            : properties[header]?.maxLength > 200
+            ? "long-text"
+            : "short-text"
+        default:
+          return type
+      }
+    },
+    [properties]
+  )
 
   const getCellValue = useCallback(
     (header: string, value: any) => {
@@ -171,6 +170,12 @@ const ResourceList: FC<ResourceListProps> = ({operation}) => {
             </Tag>
           ) : (
             ""
+          )
+        case "enum":
+          return (
+            <Tag size="md" colorScheme="yellow">
+              {value.toString()}
+            </Tag>
           )
         default:
           return <Text>{value?.toString()}</Text>
@@ -216,7 +221,7 @@ const ResourceList: FC<ResourceListProps> = ({operation}) => {
       const response = await request.send()
       return response.data
     },
-    [accessToken, listOperationsByResource]
+    [accessToken, listOperationsByResource, operation, requiredParams, resource]
   )
 
   const renderResourceActionsMenu = useCallback(
@@ -234,11 +239,17 @@ const ResourceList: FC<ResourceListProps> = ({operation}) => {
     [deleteDisclosure.onOpen, promoteDisclosure.onOpen]
   )
 
+  const getFilterMap = useCallback(() => {
+    let filterMap: LocationSearchMap = {}
+    headers.forEach((h) => (filterMap[h.toLocaleLowerCase()] = h))
+    return filterMap
+  }, [headers])
+
   return (
     <ListView<any>
       service={retrieveItems}
       queryMap={QueryMap}
-      filterMap={FilterMap}
+      filterMap={getFilterMap()}
       itemActions={renderResourceActionsMenu}
       tableOptions={ResourceTableOptions}
       // gridOptions={ProductGridOptions}
