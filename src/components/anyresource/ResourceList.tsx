@@ -13,6 +13,7 @@ import {useRouter} from "hooks/useRouter"
 import {textHelper} from "utils/text.utils"
 import {string} from "yup"
 import moment from "moment"
+import FilterModal from "./modals/FilterModal"
 
 const QueryMap = {
   // ?
@@ -27,8 +28,7 @@ interface ResourceListProps {
 const ResourceList: FC<ResourceListProps> = ({operation}) => {
   const [actionProduct, setActionProduct] = useState<any>()
   const deleteDisclosure = useDisclosure()
-  const promoteDisclosure = useDisclosure()
-  const editDisclosure = useDisclosure()
+  const filterDisclosure = useDisclosure()
   const router = useRouter()
   const {listOperationsByResource} = useApiSpec(ocConfig.baseApiUrl)
   const {accessToken} = useContext(AuthContext)
@@ -232,11 +232,10 @@ const ResourceList: FC<ResourceListProps> = ({operation}) => {
           onOpen={() => setActionProduct(product)}
           // onClose={() => setActionProduct(undefined)}
           onDelete={deleteDisclosure.onOpen}
-          onPromote={promoteDisclosure.onOpen}
         />
       )
     },
-    [deleteDisclosure.onOpen, promoteDisclosure.onOpen]
+    [deleteDisclosure.onOpen]
   )
 
   const getFilterMap = useCallback(() => {
@@ -259,19 +258,22 @@ const ResourceList: FC<ResourceListProps> = ({operation}) => {
           <Box>
             <ResourceListToolbar
               {...listViewChildProps}
-              onBulkEdit={editDisclosure.onOpen}
-              onBulkPromote={() => {
-                setActionProduct(undefined)
-                promoteDisclosure.onOpen()
-              }}
               columns={headers}
               userColumns={columns}
               properties={properties}
               resource={resource}
+              filterMap={getFilterMap()}
               onUpdateColumns={toggleVisibility}
+              onToggleFilters={() => filterDisclosure.onOpen()}
             />
           </Box>
           {renderContent}
+          <FilterModal
+            columns={columns}
+            operation={operation}
+            properties={properties}
+            disclosure={filterDisclosure}
+          />
         </Container>
       )}
     </ListView>

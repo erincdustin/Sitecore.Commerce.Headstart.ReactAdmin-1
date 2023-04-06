@@ -50,6 +50,7 @@ export interface ListViewChildrenProps {
   items?: any[] //TODO can we make this strongly typed?
   viewModeToggle: React.ReactElement
   updateQuery: (queryKey: string, resetPage?: boolean) => (value: string | boolean | number) => void
+  deleteQueryKey: (queryKey: string) => (value: string | boolean | number) => void
   upsertItems: (items: any[]) => void
   removeItems: (itemIds: string[]) => void
   routeParams: LocationSearchMap
@@ -203,6 +204,22 @@ const ListView = <T extends IDefaultResource>({
     [push, pathname, query, invertedQueryMap]
   )
 
+  const handleDeleteQueryKey = useCallback(
+    (queryKey: string) => (value: string | boolean | number) => {
+      const newQuery = {...query}
+      delete newQuery[queryKey]
+      push(
+        {
+          pathname: pathname,
+          query: newQuery
+        },
+        undefined,
+        {shallow: true}
+      )
+    },
+    [push, pathname, query]
+  )
+
   const currentSort = useMemo(() => {
     return params.queryParams["SortBy"]
   }, [params.queryParams])
@@ -292,7 +309,8 @@ const ListView = <T extends IDefaultResource>({
     currentPage,
     handleUpdateQuery,
     handleSelectChange,
-    handleSortChange
+    handleSortChange,
+    handleDeleteQueryKey
   ])
 
   const childrenProps = useMemo(() => {
@@ -303,6 +321,7 @@ const ListView = <T extends IDefaultResource>({
       upsertItems: handleUpsertItems,
       removeItems: handleRemoveItems,
       updateQuery: handleUpdateQuery,
+      deleteQueryKey: handleDeleteQueryKey,
       routeParams: params.routeParams,
       queryParams: params.queryParams,
       filterParams: params.filterParams,
@@ -319,6 +338,7 @@ const ListView = <T extends IDefaultResource>({
     handleUpdateQuery,
     handleUpsertItems,
     handleRemoveItems,
+    handleDeleteQueryKey,
     renderContent
   ])
 

@@ -10,7 +10,6 @@ interface IResourceActionMenu {
   onOpen?: () => void
   onClose?: () => void
   onDelete: () => void
-  onPromote: () => void
 }
 
 const ProductActionMenu: FC<IResourceActionMenu> = ({product, onOpen, onClose, onDelete, onPromote}) => {
