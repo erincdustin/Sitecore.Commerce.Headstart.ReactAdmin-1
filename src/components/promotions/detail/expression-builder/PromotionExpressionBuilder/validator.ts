@@ -72,11 +72,15 @@ function validateRule(rule: RuleType, group: RuleGroupTypeAny, result: Validatio
       })
     }
 
-    if (group["operator"]?.startsWith("items.") && !rule["modelPath"].startsWith("LineItem")) {
+    if (
+      group["operator"]?.startsWith("items.") &&
+      !rule["modelPath"].startsWith("LineItem") &&
+      rule["modelName"] !== "Value"
+    ) {
       reasons.push({
         code: "invalidFieldForItemsGroup",
         message:
-          "The line item group operators can only be used with LineItem, Product, Variant, and ShippingAddress fields"
+          "The line item group operators can only be used with LineItem, Product, Variant, ShippingAddress, and Value fields"
       })
     }
   }
