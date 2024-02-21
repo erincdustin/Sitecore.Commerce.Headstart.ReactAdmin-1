@@ -1,5 +1,5 @@
 import {Avatar, Button, ButtonGroup, Card, CardBody, Image, MenuItem, Text, VStack} from "@chakra-ui/react"
-import {Buyer, Buyers, Catalogs, UserGroups, Users} from "ordercloud-javascript-sdk"
+import {Buyer, Buyers, Catalogs, CostCenters, UserGroups, Users} from "ordercloud-javascript-sdk"
 import {useEffect, useState} from "react"
 import {useRouter} from "hooks/useRouter"
 import {TbUser} from "react-icons/tb"
@@ -15,7 +15,8 @@ export default function BuyerContextSwitch({...props}) {
   const [buyersMeta, setBuyersMeta] = useState({
     UserCount: null,
     UserGroupCount: null,
-    CatalogCount: null
+    CatalogCount: null,
+    CostCenterCount: null
   })
   const router = useRouter()
   const buyerid = router.query.buyerid.toString()
@@ -73,12 +74,14 @@ export default function BuyerContextSwitch({...props}) {
       requests.push(canViewBuyerUsers ? Users.List(buyerId) : null)
       requests.push(canViewBuyerUserGroups ? UserGroups.List(buyerId) : null)
       requests.push(canViewBuyerCatalogs ? Catalogs.ListAssignments({buyerID: buyerId}) : null)
+      requests.push(CostCenters.List(buyerId))
       const responses = await Promise.all(requests)
 
       setBuyersMeta({
         UserCount: canViewBuyerUsers && responses[0].Meta.TotalCount,
         UserGroupCount: canViewBuyerUserGroups && responses[1].Meta.TotalCount,
-        CatalogCount: canViewBuyerCatalogs && responses[2].Meta.TotalCount
+        CatalogCount: canViewBuyerCatalogs && responses[2].Meta.TotalCount,
+        CostCenterCount: responses[3].Meta.TotalCount
       })
     }
     getCurrentBuyerMeta(currentBuyer.ID)
@@ -155,6 +158,13 @@ export default function BuyerContextSwitch({...props}) {
               Catalogs ({buyersMeta.CatalogCount ?? "-"})
             </Button>
           </ProtectedContent>
+          <Button
+            onClick={() => router.push(`/buyers/${router.query.buyerid}/costcenters`)}
+            variant="outline"
+            style={{margin: 0}}
+          >
+            Cost Centers ({buyersMeta.CostCenterCount ?? "-"})
+          </Button>
         </ButtonGroup>
       </CardBody>
     </Card>

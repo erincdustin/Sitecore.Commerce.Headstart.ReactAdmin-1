@@ -91,7 +91,15 @@ export function ReturnItemsTable({
                 >
                   <ProductDefaultImage boxSize={{base: 75, sm: 50}} product={lineItem.Product} />
                   <VStack justifyContent="space-between">
-                    <Text fontSize={{base: "md", sm: "sm"}}>{lineItem.Product.Name}</Text>
+                    <Text
+                      fontSize={{base: "md", sm: "sm"}}
+                      maxWidth="175px"
+                      overflow="hidden"
+                      textOverflow="ellipsis"
+                      title={lineItem.Product.Name}
+                    >
+                      {lineItem.Product.Name}
+                    </Text>
                     <Link href={`/products/${lineItem.Product.ID}`}>
                       <Text fontSize="xs" color="gray.400">
                         SKU: {lineItem.Product.ID}
@@ -110,7 +118,10 @@ export function ReturnItemsTable({
                     validationSchema={validationSchema}
                     name={`ItemsToReturn.${index}.Quantity`}
                     selectProps={{
-                      options: buildQuantityOptions(lineItem)
+                      options: buildQuantityOptions(lineItem),
+                      chakraStyles: {
+                        container: (baseStyles) => ({...baseStyles, minWidth: "150px"})
+                      }
                     }}
                   />
                 </FormControl>

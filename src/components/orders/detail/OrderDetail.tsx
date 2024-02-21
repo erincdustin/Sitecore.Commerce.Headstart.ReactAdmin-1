@@ -16,6 +16,7 @@ import {OrderReturns} from "./order-returns/OrderReturns"
 import {ReturnModal} from "./order-returns/return-modal/ReturnModal"
 import {getMaxReturnQuantity} from "services/returns.service"
 import {HeaderItem} from "@/components/shared/HeaderItem"
+import {useRouter} from "next/router"
 
 type OrderDetailProps = ReturnType<typeof useOrderDetail>
 
@@ -33,6 +34,7 @@ export function OrderDetail({
   fetchLineItems,
   fetchReturns
 }: OrderDetailProps) {
+  const router = useRouter()
   const {isAdmin} = useAuth()
   const shippingAddress = lineItems?.length ? lineItems[0].ShippingAddress : null
   const orderDetailCardGap = 3
@@ -70,11 +72,12 @@ export function OrderDetail({
   const refreshOrderAndLines = async () => {
     await Promise.all([fetchOrder(order.ID), fetchLineItems(order)])
   }
+  debugger
 
   return (
     <Container maxW="100%" bgColor="st.mainBackgroundColor" flexGrow={1} p={[4, 6, 8]}>
       <Heading size="md" marginBottom={7}>
-        Order #{order.ID}
+        {router.pathname.includes("/order") ? "Order" : "Quote"} #{order.ID}
       </Heading>
       <VStack gap={orderDetailCardGap} width="full">
         <Card width="full">

@@ -1,7 +1,7 @@
 import {Box, Button, Container, Tag, Text, useDisclosure} from "@chakra-ui/react"
 import {DataTableColumn} from "@/components/shared/DataTable/DataTable"
 import ListView, {ListViewTableOptions} from "@/components/shared/ListView/ListView"
-import {Buyers, Catalogs, RequiredDeep, UserGroups, Users} from "ordercloud-javascript-sdk"
+import {Buyers, Catalogs, CostCenters, RequiredDeep, UserGroups, Users} from "ordercloud-javascript-sdk"
 import {FC, useCallback, useState} from "react"
 import {IBuyer} from "types/ordercloud/IBuyer"
 import {dateHelper} from "utils"
@@ -24,6 +24,7 @@ interface IBuyerListItem extends RequiredDeep<IBuyer> {
   userGroupsCount: number
   usersCount: number
   catalogsCount: number
+  costCentersCount
 }
 
 const BuyerParamMap = {}
@@ -109,12 +110,22 @@ const BuyerCatalogColumn: DataTableColumn<IBuyerListItem> = {
   )
 }
 
+const BuyerCostCenterColumn: DataTableColumn<IBuyerListItem> = {
+  header: "COSTCENTERS",
+  skipHref: true,
+  cell: ({row}) => (
+    <Link href={`/buyers/${row.original.ID}/costcenters`}>
+      <Button variant="outline">Cost Centers ({row.original.costCentersCount})</Button>
+    </Link>
+  )
+}
+
 const BuyerTableOptions: ListViewTableOptions<IBuyerListItem> = {
   responsive: {
     base: [IdColumn, NameColumn],
     md: [IdColumn, NameColumn],
     lg: [IdColumn, NameColumn],
-    xl: [IdColumn, NameColumn, DefaultCatalogIDColumn, StatusColumn, CreatedDateColumn]
+    xl: [IdColumn, NameColumn, StatusColumn]
   }
 }
 
@@ -136,6 +147,10 @@ const BuyerList: FC = () => {
     BuyerTableOptions.responsive.xl.push(BuyerCatalogColumn)
   }
 
+  if (!BuyerTableOptions.responsive.xl.map((c) => c.header).includes("COSTCENTERS")) {
+    BuyerTableOptions.responsive.xl.push(BuyerCostCenterColumn)
+  }
+
   const buyerListCall = async (listOptions: any) => {
     const buyersList = await Buyers.List(listOptions)
     const enhancedBuyerRequests = buyersList.Items.map(async (buyer) => {
@@ -143,13 +158,15 @@ const BuyerList: FC = () => {
       requests.push(canViewBuyerUsers ? Users.List<IBuyerUser>(buyer.ID) : null)
       requests.push(canViewBuyerUserGroups ? UserGroups.List<IBuyerUserGroup>(buyer.ID) : null)
       requests.push(canViewBuyerCatalogs ? Catalogs.ListAssignments({buyerID: buyer.ID}) : null)
+      requests.push(CostCenters.List(buyer.ID))
 
       return Promise.all(requests).then((responses) => {
         return {
           ...buyer,
           usersCount: canViewBuyerUsers && responses[0].Meta.TotalCount,
           userGroupsCount: canViewBuyerUserGroups && responses[1].Meta.TotalCount,
-          catalogsCount: canViewBuyerCatalogs && responses[2].Meta.TotalCount
+          catalogsCount: canViewBuyerCatalogs && responses[2].Meta.TotalCount,
+          costCentersCount: responses[3].Meta.TotalCount
         }
       })
     })
